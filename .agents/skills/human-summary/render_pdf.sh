@@ -14,9 +14,9 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 . "$HERE/../../../scripts/env.sh" >/dev/null 2>&1 || true
 IN="${1:?usage: render_pdf.sh <report.md> <out.pdf> [title]}"
 OUT="${2:?need <out.pdf>}"; TITLE="${3:-}"
-CHROME="${DANUS_CHROME_BIN:-google-chrome}"
-command -v "$CHROME" >/dev/null 2>&1 || {
-  echo "render_pdf: no Chrome binary ('$CHROME') — set DANUS_CHROME_BIN or install Chrome/Chromium; see SKILL.md" >&2
+CHROME="$(danus_find_chrome || true)"
+[ -n "$CHROME" ] && [ -x "$CHROME" ] || {
+  echo "render_pdf: no Chrome binary — set DANUS_CHROME_BIN or install Chrome/Chromium; see SKILL.md" >&2
   exit 3
 }
 # Install node deps once (offline-friendly: only if the katex module is absent).

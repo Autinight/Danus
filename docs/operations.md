@@ -11,9 +11,9 @@ recovery after a restart, and unattended-operation helpers.
 
 ## The persistent services
 
-Two services must be managed via `scripts/services.sh`, which `setsid`-detaches each
-so it **survives your shell / SSH session ending** (a bare `&` would die with the
-shell). Start them only this way.
+Two services must be managed via `scripts/services.sh`, which starts each in its
+own process group so it **survives your shell / SSH session ending**. Start them
+only this way.
 
 ```bash
 bash scripts/services.sh up verify            # REQUIRED — no verify ⇒ fact_submit fails ⇒ no facts
@@ -67,7 +67,7 @@ bash scripts/check-codex.sh     # one live codex ping + scan recent logs for API
     ok   codex login ok (/home/you/codex-home)
     ok   verify service up :8091 (ours)
     warn no pdflatex on PATH (write-paper PDF render needs it; set TEX_ENGINE or install TeX)
-    ok   chrome: /usr/bin/chromium-browser (human-summary PDF)
+    ok   chrome: /usr/bin/chromium-browser or the installed Chrome.app binary (human-summary PDF)
   done.
   ```
 

@@ -116,6 +116,7 @@ def test_alive_variants(tmp: Path):
     # falsy pid / None -> dead
     assert cli._alive(None) is False
     assert cli._alive(0) is False
+    assert cli._alive(-1) is False
     # our own process is alive (and not a zombie)
     assert cli._alive(os.getpid()) is True
     # a pid that (almost certainly) does not exist -> ProcessLookupError -> dead
@@ -206,25 +207,18 @@ def test_stop_one_force_sigkill_killpg_raises(tmp: Path):
             cli.time.sleep = real_sleep
 
 
-def test_alive_proc_read_failure_defaults_alive(tmp: Path):
-    """Race branch (cli.py 70-71): ``os.kill(pid,0)`` succeeds (pid exists) but the
-    ``/proc/<pid>/stat`` read fails (the process vanished between the two calls, or
-    /proc is unavailable). ``_alive`` conservatively returns True. We simulate the
-    race by patching ``cli.Path`` so the /proc read raises OSError, using our own
-    (definitely-live, non-zombie) pid so os.kill succeeds."""
-    real_Path = cli.Path
+def test_alive_process_probe_failure_defaults_alive():
+    """If the portable `ps` probe fails after kill(pid, 0), stay conservative."""
+    original_run = cli.subprocess.run
 
-    class _BoomPath:
-        def __init__(self, *a, **k):
-            pass
-        def read_text(self, *a, **k):
-            raise OSError("simulated /proc read failure")
+    def fail_probe(*args, **kwargs):
+        raise OSError("simulated ps failure")
 
-    cli.Path = _BoomPath
+    cli.subprocess.run = fail_probe
     try:
-        assert cli._alive(os.getpid()) is True        # kill ok, /proc read boom -> True
+        assert cli._alive(os.getpid()) is True
     finally:
-        cli.Path = real_Path
+        cli.subprocess.run = original_run
 
 
 def test_stop_one_force_getpgid_raises(tmp: Path):
@@ -283,29 +277,28 @@ def test_alive_permission_error_means_alive():
 
 
 def test_alive_zombie_is_dead():
-    """A child that exited but hasn't been reaped is a zombie; /proc reports state
-    'Z' and ``_alive`` must call it dead. We fork a child that exits immediately
-    and do NOT wait() it, so it lingers as a zombie we own."""
+    """An exited, unreaped child is reported as dead by the portable ps probe."""
     import subprocess
     import time
-    # 'true' exits at once; without wait() it becomes a zombie child of us.
+
     proc = subprocess.Popen(["true"])
     try:
-        # wait for the kernel to mark it Z (exited, unreaped)
         pid = proc.pid
+
         def is_zombie():
-            try:
-                stat = Path(f"/proc/{pid}/stat").read_text()
-                return stat.rsplit(")", 1)[1].split()[0] == "Z"
-            except (OSError, IndexError):
-                return False
+            result = subprocess.run(
+                ["ps", "-o", "stat=", "-p", str(pid)],
+                capture_output=True, text=True, check=False,
+            )
+            return result.returncode == 0 and result.stdout.strip().startswith("Z")
+
         end = time.time() + 5
         while time.time() < end and not is_zombie():
             time.sleep(0.02)
         assert is_zombie(), "child did not become a zombie"
-        assert cli._alive(pid) is False              # /proc state 'Z' => dead
+        assert cli._alive(pid) is False
     finally:
-        proc.wait()                                   # reap it
+        proc.wait()
 
 
 # --------------------------------------------------------------------------- #
@@ -747,12 +740,12 @@ def main() -> None:
         test_task_from_args_task, test_task_from_args_stdin,
         test_task_from_args_none_raises, test_build_parser_all_verbs,
         test_alive_permission_error_means_alive, test_alive_zombie_is_dead,
+        test_alive_process_probe_failure_defaults_alive,
     ]
     tmp_tests = [
         test_alive_variants,
         test_stop_one_force_sigkill_fallback,
         test_stop_one_force_sigkill_killpg_raises,
-        test_alive_proc_read_failure_defaults_alive,
         test_stop_one_force_getpgid_raises,
         test_read_pid_missing_and_garbage, test_read_status_missing_and_bad_json,
         test_worker_status_stuck_label, test_worker_status_working_and_dead_labels,

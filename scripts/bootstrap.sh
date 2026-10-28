@@ -7,7 +7,7 @@
 # Idempotent: re-running skips anything already in place. Installs into
 # runtime/ (gitignored), so the deployment tree stays clean and the whole
 # toolchain is self-contained (no system-wide installs). Provisions:
-#   1) Node 22            -> runtime/node22            (official tarball)
+#   1) Node 22            -> runtime/node22            (official Linux/macOS tarball)
 #   2) Python venv + deps -> runtime/venv             (mcp/fastapi/uvicorn/pydantic/openai/anthropic
 #                                                      + the danus package itself, editable)
 #   3) codex CLI          -> runtime/codex-npm        (npm @openai/codex)
@@ -20,25 +20,64 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DANUS_ROOT="$(cd "$HERE/.." && pwd)"
 RT="$DANUS_ROOT/runtime"
 NODE_VERSION="${NODE_VERSION:-v22.14.0}"
-ARCH="$(uname -m)"; case "$ARCH" in x86_64) NARCH=x64;; aarch64|arm64) NARCH=arm64;; *) NARCH=x64;; esac
 mkdir -p "$RT/logs"
 log(){ printf '[bootstrap] %s\n' "$*"; }
 
+. "$HERE/node-platform.sh"
+NODE_TARGET="$(danus_node_platform)" || { log "FATAL: unsupported host platform"; exit 1; }
+read -r NODE_OS NARCH NODE_SUFFIX <<< "$NODE_TARGET"
+
 # Be polite about IO/CPU (do not saturate a shared host).
-NICE="nice -n19"; command -v ionice >/dev/null 2>&1 && NICE="ionice -c3 $NICE"
+run_nice(){
+  if [ "$NODE_OS" = linux ] && command -v ionice >/dev/null 2>&1; then
+    ionice -c3 nice -n 19 "$@"
+  else
+    nice -n 19 "$@"
+  fi
+}
 
 # --- 1) Node 22 -------------------------------------------------------------
 NODE_DIR="$RT/node22"
-if [ -x "$NODE_DIR/bin/node" ]; then
+if [ -x "$NODE_DIR/bin/node" ] && "$NODE_DIR/bin/node" --version >/dev/null 2>&1 \
+   && [ -x "$NODE_DIR/bin/npm" ] \
+   && PATH="$NODE_DIR/bin:$PATH" "$NODE_DIR/bin/npm" --version >/dev/null 2>&1; then
   log "node present: $("$NODE_DIR/bin/node" --version)"
 else
   log "installing Node $NODE_VERSION ($NARCH) -> $NODE_DIR"
-  TARBALL="node-$NODE_VERSION-linux-$NARCH.tar.xz"
-  $NICE curl -fsSL "https://nodejs.org/dist/$NODE_VERSION/$TARBALL" -o "$RT/$TARBALL" || true
-  [ -s "$RT/$TARBALL" ] || { log "FATAL: could not download node (set NODE_VERSION / check network)"; exit 1; }
-  mkdir -p "$NODE_DIR"
-  tar -xJf "$RT/$TARBALL" -C "$NODE_DIR" --strip-components=1
-  rm -f "$RT/$TARBALL"
+  TARBALL="node-$NODE_VERSION-$NODE_OS-$NARCH.$NODE_SUFFIX"
+  ARCHIVE="$RT/$TARBALL"
+  ARCHIVE_PART="$ARCHIVE.part"
+  NODE_STAGE="$RT/node22.staging"
+  rm -f "$ARCHIVE_PART"
+  rm -rf "$NODE_STAGE"
+  if ! run_nice curl --http1.1 --retry 5 --retry-all-errors --retry-delay 1 \
+      -fsSL "https://nodejs.org/dist/$NODE_VERSION/$TARBALL" -o "$ARCHIVE_PART"; then
+    rm -f "$ARCHIVE_PART"
+    log "FATAL: could not download node (set NODE_VERSION / check network)"
+    exit 1
+  fi
+  mv "$ARCHIVE_PART" "$ARCHIVE"
+  if [ "$NODE_OS" = linux ]; then
+    tar -tJf "$ARCHIVE" >/dev/null
+  else
+    tar -tzf "$ARCHIVE" >/dev/null
+  fi
+  mkdir -p "$NODE_STAGE"
+  if [ "$NODE_OS" = linux ]; then
+    tar -xJf "$ARCHIVE" -C "$NODE_STAGE" --strip-components=1
+  else
+    tar -xzf "$ARCHIVE" -C "$NODE_STAGE" --strip-components=1
+  fi
+  if [ ! -x "$NODE_STAGE/bin/node" ] || ! "$NODE_STAGE/bin/node" --version >/dev/null 2>&1 \
+     || [ ! -x "$NODE_STAGE/bin/npm" ] \
+     || ! PATH="$NODE_STAGE/bin:$PATH" "$NODE_STAGE/bin/npm" --version >/dev/null 2>&1; then
+    rm -rf "$NODE_STAGE" "$ARCHIVE"
+    log "FATAL: downloaded Node archive did not produce a working node/npm runtime"
+    exit 1
+  fi
+  rm -rf "$NODE_DIR"
+  mv "$NODE_STAGE" "$NODE_DIR"
+  rm -f "$ARCHIVE"
   log "node installed: $("$NODE_DIR/bin/node" --version)"
 fi
 export PATH="$NODE_DIR/bin:$PATH"
@@ -55,12 +94,13 @@ if "$VENV/bin/python" -c "$DEPS" 2>/dev/null; then
   log "venv present + healthy"
 else
   [ -e "$VENV" ] && { log "venv missing/broken (dangling base interpreter?) — rebuilding"; rm -rf "$VENV"; }
-  PYBASE="$(command -v python3)"; [ -n "$PYBASE" ] || { log "FATAL: no python3 on PATH to build the venv"; exit 1; }
+  . "$HERE/python-runtime.sh"
+  PYBASE="$(danus_find_python)" || { log "FATAL: Python 3.10+ not found (set DANUS_BOOTSTRAP_PYTHON)"; exit 1; }
   log "creating venv ($PYBASE) -> $VENV"
   "$PYBASE" -m venv "$VENV"
   log "installing python deps (mcp/fastapi/uvicorn/pydantic/openai/anthropic)"
-  $NICE "$VENV/bin/pip" install --quiet --no-cache-dir --upgrade pip >/dev/null 2>&1 || true
-  $NICE "$VENV/bin/pip" install --quiet --no-cache-dir \
+  run_nice "$VENV/bin/pip" install --quiet --no-cache-dir --upgrade pip >/dev/null 2>&1 || true
+  run_nice "$VENV/bin/pip" install --quiet --no-cache-dir \
     "mcp>=1.0.0" "fastapi>=0.110.0" "uvicorn>=0.30.0" "pydantic>=2.0" "openai>=2.40" \
     "anthropic>=0.92" \
     || { log "FATAL: pip install failed"; exit 1; }
@@ -77,7 +117,7 @@ if (cd / && "$VENV/bin/python" -c 'import danus' 2>/dev/null); then
   log "danus package present in venv"
 else
   log "installing the danus package (editable) into the venv"
-  $NICE "$VENV/bin/pip" install --quiet --no-cache-dir -e "$DANUS_ROOT" \
+  run_nice "$VENV/bin/pip" install --quiet --no-cache-dir -e "$DANUS_ROOT" \
     || { log "FATAL: pip install -e failed (the danus package)"; exit 1; }
   (cd / && "$VENV/bin/python" -c 'import danus') \
     || { log "FATAL: danus still not importable after editable install"; exit 1; }
@@ -93,7 +133,7 @@ if [ -n "$CODEX_JS" ]; then
 else
   log "installing @openai/codex -> $CODEX_NPM"
   mkdir -p "$CODEX_NPM"
-  $NICE "$NODE_DIR/bin/npm" install -g --prefix "$CODEX_NPM" @openai/codex >/dev/null 2>&1 \
+  run_nice "$NODE_DIR/bin/npm" install -g --prefix "$CODEX_NPM" @openai/codex >/dev/null 2>&1 \
     || { log "FATAL: npm install @openai/codex failed"; exit 1; }
   CODEX_JS="$(find "$CODEX_NPM" -path '*/@openai/codex/bin/codex.js' 2>/dev/null | head -1 || true)"
   [ -n "$CODEX_JS" ] || { log "FATAL: codex.js not found after install"; exit 1; }
@@ -103,7 +143,7 @@ fi
 HS="$DANUS_ROOT/.agents/skills/human-summary"
 if [ -d "$HS" ] && [ ! -d "$HS/node_modules/katex" ]; then
   log "installing human-summary node deps (markdown-it/katex)"
-  ( cd "$HS" && $NICE "$NODE_DIR/bin/npm" install --no-fund --no-audit >/dev/null 2>&1 ) \
+  ( cd "$HS" && run_nice "$NODE_DIR/bin/npm" install --no-fund --no-audit >/dev/null 2>&1 ) \
     || log "WARN: human-summary npm install failed (PDF render needs it)"
 fi
 

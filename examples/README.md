@@ -63,7 +63,7 @@ There is no Telegram / vendor binding. Set `DANUS_NOTIFY` in
 
 ### Keeping the loops running
 These loops run in the foreground. To make them persist beyond your shell, wrap
-them the same way you would anything else — a `tmux` window or `setsid`. Do
+them the same way you would anything else — for example, use a `tmux` window. Do
 **not** register them in the services pidfile/autostart manifest: that registry
 belongs to `scripts/services.sh` (which owns `verify` and the dashboard);
 `examples/` never touches it.

@@ -108,6 +108,10 @@ examples/              unattended-ops examples + a toy project
 
 ## Quickstart
 
+Bootstrap and services support Linux and macOS on x64 and arm64. Use a dedicated
+VM or container when possible; see `docs/security-and-trust.md` before enabling
+autonomous operation.
+
 ```bash
 # 1. provision the toolchain (Node + venv + codex CLI) into runtime/
 bash scripts/bootstrap.sh

@@ -3,10 +3,8 @@
 # Danus services — start/stop/inspect the long-running services so they PERSIST
 # beyond the session that launched them (a codex session, an ssh shell…).
 #
-# Why setsid: a plain `… &` background job started from a transient shell gets
-# reaped when that shell exits. `setsid` puts the service in its OWN session
-# (reparented to init), with stdio detached — so it keeps running after the
-# codex session ends / the laptop disconnects.
+# Services run in a detached POSIX session/process group, started by Python's
+# start_new_session so the same lifecycle works on Linux and macOS without setsid.
 #
 #   bash scripts/services.sh up   verify
 #   bash scripts/services.sh up   dashboard <project>
@@ -29,14 +27,12 @@ AUTO="$RUN/autostart"
 _auto_add(){ touch "$AUTO"; grep -qxF "$1" "$AUTO" 2>/dev/null || echo "$1" >> "$AUTO"; }
 _auto_del(){ [ -f "$AUTO" ] || return 0; grep -vxF "$1" "$AUTO" > "$AUTO.tmp" 2>/dev/null || true; mv -f "$AUTO.tmp" "$AUTO" 2>/dev/null || true; }
 
-# _spawn <name> <command…> : detach via setsid; the inner shell records its own
-# pid then exec's the service, so the pidfile holds the real service pid (exec
-# preserves the pid down the start-*.sh → python chain).
+# _spawn <name> <command…> : detach a new process group and record its leader pid.
 _spawn(){
   local name="$1"; shift
   local pf; pf="$(_pf "$name")"
   if _alive "$name"; then echo "[$name] already up (pid $(cat "$pf"))"; return 0; fi
-  setsid bash -c "echo \$\$ > '$pf'; exec $*" >"$LOG/$name.log" 2>&1 </dev/null &
+  "$DANUS_PY" -m danus.service_daemon start "$pf" "$LOG/$name.log" -- "$@" >/dev/null || return 1
   sleep 1
   if _alive "$name"; then echo "[$name] up (pid $(cat "$pf"); log: runtime/logs/$name.log)";
   else echo "[$name] FAILED to start — see runtime/logs/$name.log"; tail -5 "$LOG/$name.log" 2>/dev/null; return 1; fi
@@ -45,9 +41,8 @@ _spawn(){
 _stop(){
   local name="$1" pf p; pf="$(_pf "$name")"
   p="$(cat "$pf" 2>/dev/null || true)"
-  if [ -n "$p" ] && kill -0 "$p" 2>/dev/null; then
-    kill -TERM -"$p" 2>/dev/null || kill -TERM "$p" 2>/dev/null   # negative pid = whole session/group
-    sleep 2; kill -0 "$p" 2>/dev/null && { kill -KILL -"$p" 2>/dev/null || kill -KILL "$p" 2>/dev/null; }
+  if [ -n "$p" ]; then
+    "$DANUS_PY" -m danus.service_daemon stop "$p"
     echo "[$name] stopped (was pid $p)"
   else echo "[$name] not running"; fi
   rm -f "$pf"
@@ -57,9 +52,9 @@ case "${1:-}" in
   up)
     svc="${2:?usage: services.sh up verify|dashboard <project>}"
     case "$svc" in
-      verify)    _spawn verify    "bash '$DANUS_ROOT/scripts/start-verify.sh'" && _auto_add "verify" ;;
+      verify)    _spawn verify bash "$DANUS_ROOT/scripts/start-verify.sh" && _auto_add "verify" ;;
       dashboard) proj="${3:?usage: services.sh up dashboard <project>}"
-                 _spawn "dashboard-$proj" "bash '$DANUS_ROOT/scripts/start-dashboard.sh' '$proj'" && _auto_add "dashboard $proj" ;;
+                 _spawn "dashboard-$proj" bash "$DANUS_ROOT/scripts/start-dashboard.sh" "$proj" && _auto_add "dashboard $proj" ;;
       *) echo "unknown service: $svc"; exit 1 ;;
     esac ;;
   down)

@@ -21,7 +21,7 @@ provided so you can test the renderer directly.
 ## Smoke test
 
 Prerequisites: node (`scripts/bootstrap.sh`) and a headless Chrome/Chromium
-(`DANUS_CHROME_BIN` or `google-chrome`). Check with:
+(`DANUS_CHROME_BIN`, a binary on `PATH`, or a standard macOS Chrome.app bundle). Check with:
 
 ```bash
 bash ../doctor.sh

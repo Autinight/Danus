@@ -122,7 +122,7 @@ progress report, not a publication artifact.
 ## Prerequisites for the render (declare them; the ops layer provisions them)
 
 - A **headless Chrome / Chromium** binary — resolved via `DANUS_CHROME_BIN` (from
-  `scripts/env.sh`) or a `google-chrome` on PATH. This is a local PDF-render
+  `scripts/env.sh`), PATH, or a standard macOS application bundle. This is a local PDF-render
   binary only; it is unrelated to any browser transport. Confirm with
   `bash "${CLAUDE_SKILL_DIR}/doctor.sh"`.
 - **node** (provisioned by `scripts/bootstrap.sh`) + the pinned node deps

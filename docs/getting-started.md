@@ -6,9 +6,11 @@ state. Read `concepts.md` first for the mental model; after this, see
 
 ## Prerequisites (on the host)
 
-- **Linux** host you are willing to let autonomous agents operate on (a dedicated
-  VM / container / pod — see `security-and-trust.md`).
-- `git`, `python3` (3.10+), `curl`, `tar`, `bash`. `bootstrap.sh` provisions
+- **Linux or macOS** host you are willing to let autonomous agents operate on
+  (a dedicated VM / container is safer — see `security-and-trust.md`).
+- `git`, a Python 3.10+ interpreter (`python3.14` through `python3.10` or
+  `python3`; override with `DANUS_BOOTSTRAP_PYTHON`), `curl`, `tar`, and `bash`.
+  `bootstrap.sh` provisions
   everything else (Node, a venv, the codex CLI) into `runtime/` — no system-wide
   installs.
 - A **codex backend**: either an OpenAI-compatible API key, or a ChatGPT Pro/Plus
@@ -23,7 +25,7 @@ bash scripts/bootstrap.sh
 ```
 
 Idempotent. Installs into gitignored `runtime/`:
-- Node 22 → `runtime/node22` (default `NODE_VERSION` `v22.14.0`),
+- Node 22 → `runtime/node22` (default `NODE_VERSION` `v22.14.0`; native Linux/macOS and x64/arm64 archive),
 - a Python venv → `runtime/venv` (`mcp`, `fastapi`, `uvicorn`, `pydantic`, `openai`,
   plus the `danus` package itself as an editable install — the worker MCP gateway
   and the `bin/` wrappers run `python -m danus.*` from arbitrary cwds, so the
@@ -81,7 +83,7 @@ bash scripts/services.sh up verify
 ```
 
 **Without the verify service, `fact_submit` fails and no facts are ever produced.**
-`services.sh` `setsid`-detaches it so it survives your shell. See `operations.md`.
+`services.sh` starts it in a separate process group so it survives your shell. See `operations.md`.
 
 ## 5. Health check
 
@@ -110,7 +112,7 @@ DANUS_ROOT=/home/you/Danus
   ok   codex login ok (/home/you/codex-home)
   ok   verify service up :8091 (ours)
   warn no pdflatex on PATH (write-paper PDF render needs it; set TEX_ENGINE or install TeX)
-  ok   chrome: /usr/bin/chromium-browser (human-summary PDF)
+  ok   chrome: /usr/bin/chromium-browser or the installed Chrome.app binary (human-summary PDF)
 done.
 ```
 

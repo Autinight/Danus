@@ -31,7 +31,7 @@ esac
 # write-paper PDF render (soft): TEX_ENGINE override, else pdflatex on PATH.
 TEX="${TEX_ENGINE:-pdflatex}"
 command -v "$TEX" >/dev/null 2>&1 && ok "latex: $TEX ($($TEX --version 2>/dev/null | head -1))" || wn "no $TEX on PATH (write-paper PDF render needs it; set TEX_ENGINE or install TeX)"
-# human-summary PDF render (soft): DANUS_CHROME_BIN, else chrome/chromium on PATH.
-CHROME="${DANUS_CHROME_BIN:-}"; [ -z "$CHROME" ] && CHROME="$(command -v chromium chromium-browser google-chrome google-chrome-stable 2>/dev/null | head -1)"
+# human-summary PDF render (soft): DANUS_CHROME_BIN, PATH, or a macOS app bundle.
+CHROME="$(danus_find_chrome || true)"
 { [ -n "$CHROME" ] && [ -x "$CHROME" ]; } && ok "chrome: $CHROME (human-summary PDF)" || wn "no Chrome/Chromium (human-summary PDF render needs it; set DANUS_CHROME_BIN or install)"
 echo "done."

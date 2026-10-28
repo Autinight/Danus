@@ -48,17 +48,42 @@ export DANUS_CODEX_EFFORT="$DANUS_MAIN_EFFORT"
 export DANUS_CHROME_BIN="${DANUS_CHROME_BIN:-}"        # headless Chrome/Chromium for human-summary PDF (empty = auto-detect)
 export CODEX_BACKEND="${CODEX_BACKEND:-api}"            # api (BYO key) | chatgpt (your login)
 
+danus_find_chrome(){
+  local name candidate
+  if [ -n "$DANUS_CHROME_BIN" ]; then
+    if [ -x "$DANUS_CHROME_BIN" ]; then printf '%s\n' "$DANUS_CHROME_BIN"; return 0; fi
+    candidate="$(command -v "$DANUS_CHROME_BIN" 2>/dev/null || true)"
+    [ -n "$candidate" ] && [ -x "$candidate" ] && { printf '%s\n' "$candidate"; return 0; }
+    return 1
+  fi
+  for name in chromium chromium-browser google-chrome google-chrome-stable; do
+    candidate="$(command -v "$name" 2>/dev/null || true)"
+    [ -n "$candidate" ] && [ -x "$candidate" ] && { printf '%s\n' "$candidate"; return 0; }
+  done
+  if [ "$(uname -s)" = Darwin ]; then
+    for candidate in \
+      "$HOME/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+      "$HOME/Applications/Chromium.app/Contents/MacOS/Chromium" \
+      "/Applications/Chromium.app/Contents/MacOS/Chromium"; do
+      [ -x "$candidate" ] && { printf '%s\n' "$candidate"; return 0; }
+    done
+  fi
+  return 1
+}
+
 # 4) PATH: bin wrappers first, then the provisioned node + venv (if bootstrapped)
 _danus_path="$DANUS_ROOT/bin"
 [ -n "${DANUS_NODE_BIN:-}" ] && [ -d "$DANUS_NODE_BIN" ] && _danus_path="$_danus_path:$DANUS_NODE_BIN"
 [ -n "${DANUS_VENV:-}" ]     && [ -d "$DANUS_VENV/bin" ] && _danus_path="$_danus_path:$DANUS_VENV/bin"
 case ":$PATH:" in *":$_danus_path:"*) : ;; *) export PATH="$_danus_path:$PATH" ;; esac
 
-# 5) the python the engine runs on (venv if bootstrapped, else system python3)
+# 5) the Python the engine runs on (venv if bootstrapped, else Python 3.10+)
 if [ -n "${DANUS_VENV:-}" ] && [ -x "$DANUS_VENV/bin/python" ]; then
   export DANUS_PY="$DANUS_VENV/bin/python"
 else
-  export DANUS_PY="${DANUS_PY:-$(command -v python3 || true)}"
+  . "$DANUS_ROOT/scripts/python-runtime.sh"
+  export DANUS_PY="${DANUS_PY:-$(danus_find_python || true)}"
 fi
 
 # silent unless DANUS_ENV_VERBOSE=1

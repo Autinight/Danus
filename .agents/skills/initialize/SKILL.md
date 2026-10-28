@@ -59,7 +59,7 @@ Then ask, as plain text questions:
 - **codex:** backend=api → `bash scripts/check-codex.sh` (confirm reachable);
   backend=chatgpt → **you** run `bash scripts/setup-codex.sh login` and give the
   operator the printed URL + device code (they only open it and authorize).
-- **Services (must persist beyond your session — `services.sh` uses setsid):**
+- **Services (must persist beyond your session — `services.sh` starts a separate process group):**
   `bash scripts/services.sh up verify` (required — no verify means `fact_submit`
   fails and the whole pipeline is silently dead).
 - **Verify the stack:** `bash scripts/doctor.sh`; report green/red plainly.
