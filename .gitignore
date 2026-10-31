@@ -9,6 +9,7 @@ __pycache__/
 # --- Build / packaging artifacts (from `pip install -e .`) ---
 build/
 dist/
+node_modules/
 *.egg-info/
 
 # --- Virtual environments ---

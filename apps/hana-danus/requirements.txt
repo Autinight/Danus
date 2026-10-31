@@ -1,0 +1,5 @@
+# Direct runtime roots for the Hana v2 baseline; dependency closure is pinned in dependencies.lock.json.
+mcp==2.3.0
+fastapi==0.162.0
+uvicorn==0.54.0
+pydantic==2.14.1

@@ -139,6 +139,13 @@ def run_round(wl: L.WorkerLayout, role: dict, prompt: str, log_path: Path,
         # optional per-project worker-only model provider override (opt-in;
         # empty unless DANUS_PROJECT_<PROJECT>_WORKER_API_* is configured)
         *codex.project_worker_config_args(wl.project),
+        # The gateway must load even for a new/untrusted App-owned project.
+        # Do not mutate the operator's Codex trust or authentication files.
+        "-c", codex.gateway_mcp_arg("worker", {
+            "DANUS_PROJECT_DIR": str(wl.project_dir),
+            "DANUS_AUTHOR": wl.name,
+            "DANUS_VERIFY_URL": os.environ.get("DANUS_VERIFY_URL", "http://127.0.0.1:8091/verify"),
+        }),
         "-C", str(wdir),
         # on an install without .git (tarball download), codex's
         # trusted-directory check refuses to run the worker round

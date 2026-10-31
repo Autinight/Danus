@@ -1,0 +1,68 @@
+/* Resolve host tokens on :root before mapping colliding upstream names on body. */
+:root {
+  --danus-bg: var(--bg, Canvas);
+  --danus-card: var(--bg-card, Canvas);
+  --danus-text: var(--text, CanvasText);
+  --danus-secondary: var(--text-light, var(--text, CanvasText));
+  --danus-muted: var(--text-muted, var(--text-light, CanvasText));
+  --danus-accent: var(--accent, CanvasText);
+  --danus-hover: var(--accent-hover, var(--accent, CanvasText));
+  --danus-tint: var(--accent-light, color-mix(in srgb, var(--danus-accent) 12%, var(--danus-card)));
+  --danus-link: var(--link, var(--accent, CanvasText));
+  --danus-link-hover: var(--link-hover, var(--accent-hover, var(--link, CanvasText)));
+  --danus-border: var(--border, color-mix(in srgb, var(--danus-text) 20%, var(--danus-card)));
+  --danus-shadow: var(--shadow, color-mix(in srgb, var(--danus-text) 18%, transparent));
+  --danus-success: var(--green, var(--accent, CanvasText));
+  --danus-warning: var(--coral, var(--accent, CanvasText));
+  --danus-danger: var(--danger, var(--coral, CanvasText));
+  --danus-graph-low: color-mix(in srgb, var(--danus-card) 70%, var(--danus-accent));
+  --danus-graph-high: color-mix(in srgb, var(--danus-accent) 85%, var(--danus-text));
+  scrollbar-color: color-mix(in srgb, var(--danus-accent) 35%, var(--danus-border)) var(--danus-bg);
+}
+body {
+  --bg-primary: var(--danus-card);
+  --bg-secondary: var(--danus-bg);
+  --bg-tertiary: color-mix(in srgb, var(--danus-card) 94%, var(--danus-text));
+  --text-primary: var(--danus-text);
+  --text-secondary: var(--danus-secondary);
+  --text-muted: var(--danus-muted);
+  --border: var(--danus-border);
+  --border-strong: color-mix(in srgb, var(--danus-border) 75%, var(--danus-text));
+  --accent: var(--danus-accent);
+  --accent-strong: var(--danus-hover);
+  --accent-bg: var(--danus-tint);
+  --accent-bg-soft: color-mix(in srgb, var(--danus-accent) 6%, var(--danus-card));
+  --blue: var(--danus-link);
+  --green: var(--danus-success);
+  --orange: var(--danus-warning);
+  --red: var(--danus-danger);
+  --purple: var(--danus-accent);
+}
+::selection {
+  background: color-mix(in srgb, var(--danus-accent) 28%, var(--danus-card));
+  color: var(--danus-text);
+}
+:focus-visible { outline-color: var(--danus-hover); }
+body a, body a:visited { color: var(--danus-link); }
+body a:hover { color: var(--danus-link-hover); }
+.pred-link:hover, .more:hover { color: var(--danus-hover); }
+.conn-banner {
+  background: color-mix(in srgb, var(--danus-danger) 14%, var(--danus-card));
+  color: var(--danus-text);
+}
+.tag.correct {
+  border-color: color-mix(in srgb, var(--danus-success) 30%, var(--danus-border));
+  background: color-mix(in srgb, var(--danus-success) 7%, var(--danus-card));
+}
+.tag.wrong {
+  border-color: color-mix(in srgb, var(--danus-danger) 30%, var(--danus-border));
+  background: color-mix(in srgb, var(--danus-danger) 7%, var(--danus-card));
+}
+.tag.cost {
+  border-color: color-mix(in srgb, var(--danus-warning) 30%, var(--danus-border));
+  background: color-mix(in srgb, var(--danus-warning) 6%, var(--danus-card));
+}
+.graph-toolbar > .legend + span[style] {
+  background: linear-gradient(90deg, var(--danus-graph-low), var(--danus-graph-high)) !important;
+}
+.katex-error { color: var(--danus-danger) !important; }

@@ -29,6 +29,30 @@ along the way.
 
 See `ARCHITECTURE.md` for the layered design and the map of every module.
 
+## Hana Danus App (macOS arm64)
+
+This fork also contains **Hana Danus**, a Hana v2 App that bundles the Danus
+engine, standalone Python and dependencies, Codex, and the original read-only
+dashboard. The current App source version is **0.2.6**. Development uses one
+repository; installed users do not need this checkout.
+
+- [App overview, permissions, and account setup](apps/hana-danus/README.md)
+- [Build instructions](scripts/hana-app/README.md)
+- [Development state](apps/hana-danus/dev-state.md) and
+  [software/installed acceptance evidence](docs/hana-app-acceptance.md)
+
+App source lives in `apps/hana-danus/`; packaging lives in `scripts/hana-app/`;
+regressions live in `tests/hana_app/` and `tests/hana_packaging/`. Local toolchains,
+staging trees, credentials, and generated ZIPs are excluded from Git. Browser
+vendor assets and their licenses are checked in; their npm manifests are in
+`scripts/hana-app/ui-vendor/`.
+
+The App currently reuses the local user's standard Codex login and configured
+model. It does not inherit Hana's LLM providers and has no built-in account or
+provider setup screen. Managed local-machine execution needs explicit permission;
+actual proof runs consume the user's model allowance. The 0.2.6 theme correction
+has software regression coverage, with live visual acceptance recorded separately.
+
 ## Orchestrator options
 
 The workers and the verifier always run on **codex**. On **this branch the main
@@ -102,6 +126,9 @@ danus/                 the engine (installable Python package)
 agents/                codex agent contracts (main/worker/verifier) + worker & verify skills
 .agents/skills/         main-agent skills: elaboration · human-summary · initialize · write-paper
 bin/ scripts/ config/  runtime layer (wrappers, bootstrap/services/doctor, env templates)
+apps/hana-danus/        Hana v2 App adapter, tools, services, dashboard bridge, and SDK
+scripts/hana-app/       App packaging, dependency manifests, and licenses
+tests/hana_*/          App and packaging regressions (mocked software fixtures)
 docs/                  human docs: getting started · concepts · operating guide · security & trust · …
 examples/              unattended-ops examples + a toy project
 ```

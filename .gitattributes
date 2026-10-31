@@ -1,0 +1,9 @@
+# Preserve upstream SDK and browser distributions byte-for-byte.
+# Their formatting belongs to upstream; keep them out of authored-source statistics.
+apps/hana-danus/sdk/** -text -whitespace linguist-vendored
+apps/hana-danus/ui/vendor/** -text -whitespace linguist-vendored
+apps/hana-danus/ui/assets/sdk.js -text -whitespace linguist-vendored
+apps/hana-danus/ui/assets/app-ui.js -text -whitespace linguist-vendored
+apps/hana-danus/ui/assets/app-ui.js.LEGAL.txt -text -whitespace linguist-vendored
+apps/hana-danus/ui/assets/app-ui.css -text -whitespace linguist-vendored
+apps/hana-danus/ui/assets/THIRD_PARTY_NOTICES.txt -text -whitespace linguist-vendored

@@ -1,0 +1,30 @@
+{
+  "manifestVersion": 2,
+  "id": "hana-danus",
+  "name": "Hana Danus",
+  "version": "0.2.6",
+  "entry": "index.js",
+  "capabilities": [
+    "app/runtime.execute",
+    "app/runtime.local-machine",
+    "app/runtime.network",
+    "app/tools.expose-to-model",
+    "app/tasks.manage"
+  ],
+  "contributes": {
+    "cards": [
+      {
+        "id": "dashboard",
+        "title": "Hana Danus",
+        "route": "/panel.html",
+        "realization": "page",
+        "siteNavEntry": true,
+        "face": {
+          "image": "assets/cover.svg"
+        }
+      }
+    ]
+  },
+  "icon": "assets/icon.svg",
+  "minAppVersion": "1.2.1-beta"
+}

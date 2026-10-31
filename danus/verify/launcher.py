@@ -98,7 +98,7 @@ def _mcp_config_arg() -> str:
     """Inject the danus gateway (role=verifier) into the codex agent via `-c`,
     independent of CODEX_HOME. Runs the installed package (``python3 -m
     danus.gateway``); the verifier role exposes only search_arxiv_theorems."""
-    return 'mcp_servers.danus={command="python3",args=["-m","danus.gateway"],env={DANUS_ROLE="verifier"}}'
+    return codex.gateway_mcp_arg("verifier")
 
 
 # --------------------------------------------------------------------------- #

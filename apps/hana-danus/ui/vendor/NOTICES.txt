@@ -1,0 +1,51 @@
+Hana Danus UI vendor packages
+
+Packages and archive integrity values are pinned by the included npm lock data.
+
+argparse 2.0.1 (Python-2.0)
+Source: https://registry.npmjs.org/argparse/-/argparse-2.0.1.tgz
+Integrity: sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==
+
+commander 8.3.0 (MIT)
+Source: https://registry.npmjs.org/commander/-/commander-8.3.0.tgz
+Integrity: sha512-OkTL9umf+He2DZkUq8f8J9of7yL6RJKI24dVITBmNfZBmri9zYZQrKkuXiKhyfPSu8tUhnVBB1iKXevvnlR4Ww==
+
+echarts 5.5.0 (Apache-2.0)
+Source: https://registry.npmjs.org/echarts/-/echarts-5.5.0.tgz
+Integrity: sha512-rNYnNCzqDAPCr4m/fqyUFv7fD9qIsd50S6GDFgO1DxZhncCsNsG7IfUlAlvZe5oSEQxtsjnHiUuppzccry93Xw==
+
+entities 4.5.0 (BSD-2-Clause)
+Source: https://registry.npmjs.org/entities/-/entities-4.5.0.tgz
+Integrity: sha512-V0hjH4dGPh9Ao5p0MoRY6BVqtwCjhz6vI5LT8AJ55H+4g9/4vbHx1I54fS0XuclLhDHArPQCiMjDxjaL8fPxhw==
+
+katex 0.16.11 (MIT)
+Source: https://registry.npmjs.org/katex/-/katex-0.16.11.tgz
+Integrity: sha512-RQrI8rlHY92OLf3rho/Ts8i/XvjgguEjOkO1BEXcU3N8BqPpSzBNwV/G0Ukr+P/l3ivvJUE/Fa/CwbS6HesGNQ==
+
+linkify-it 5.0.2 (MIT)
+Source: https://registry.npmjs.org/linkify-it/-/linkify-it-5.0.2.tgz
+Integrity: sha512-ONTm2jCMAVZjgQa/Fy1kScXsuOoF5NPTsoFBdE1KVIZ2vAh/r9+Bqo+0jINCBYnavTPQZz38QzFTme79ENoN3Q==
+
+markdown-it 14.1.0 (MIT)
+Source: https://registry.npmjs.org/markdown-it/-/markdown-it-14.1.0.tgz
+Integrity: sha512-a54IwgWPaeBCAAsv13YgmALOF1elABB08FxO9i+r4VFk5Vl4pKokRPeX8u5TCgSsPi6ec1otfLjdOpVcgbpshg==
+
+mdurl 2.1.0 (MIT)
+Source: https://registry.npmjs.org/mdurl/-/mdurl-2.1.0.tgz
+Integrity: sha512-1+HBaOx0zi/dQWht8rNv9MYf9qqpqL/kxI0hXImU6Y547zM6Sni8BQibt7ifgMcYtQg41ao3Ivd6cnSM86inpg==
+
+punycode.js 2.3.1 (MIT)
+Source: https://registry.npmjs.org/punycode.js/-/punycode.js-2.3.1.tgz
+Integrity: sha512-uxFIHU0YlHYhDQtV4R9J6a52SLx28BCjT+4ieh7IGbgwVJWO+km431c4yRlREUAsAmt/uMjQUyQHNEPf0M39CA==
+
+tslib 2.3.0 (0BSD)
+Source: https://registry.npmjs.org/tslib/-/tslib-2.3.0.tgz
+Integrity: sha512-N82ooyxVNm6h1riLCoyS9e3fuJ3AMG2zIZs2Gd1ATcSFjSA23Q0fzjjZeh0jbJvWVDZ0cJT8yaNNaaXHzueNjg==
+
+uc.micro 2.1.0 (MIT)
+Source: https://registry.npmjs.org/uc.micro/-/uc.micro-2.1.0.tgz
+Integrity: sha512-ARDJmphmdvUk6Glw7y9DQ2bFkKBHwQHLi2lsaH6PPmz/Ka9sFOBsBluozhDltWmnv9u/cF6Rt87znRTPV+yp/A==
+
+zrender 5.5.0 (BSD-3-Clause)
+Source: https://registry.npmjs.org/zrender/-/zrender-5.5.0.tgz
+Integrity: sha512-O3MilSi/9mwoovx77m6ROZM7sXShR/O/JIanvzTwjN3FORfLSr81PsUGd7jlaYOeds9d8tw82oP44+3YucVo+w==

@@ -31,6 +31,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import stat
 import urllib.request
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -101,9 +102,18 @@ def _verify(statement: str, proof: str) -> Dict[str, Any]:
     except ValueError:
         timeout = 3600
     data = json.dumps({"statement": statement, "proof": proof}).encode("utf-8")
-    req = urllib.request.Request(
-        verify_url, data=data, headers={"Content-Type": "application/json"}
-    )
+    headers = {"Content-Type": "application/json"}
+    token_path = os.environ.get("DANUS_VERIFY_TOKEN_FILE")
+    if token_path:
+        token_file = Path(token_path)
+        metadata = token_file.lstat()
+        if not stat.S_ISREG(metadata.st_mode) or stat.S_IMODE(metadata.st_mode) != 0o600:
+            raise RuntimeError("verify authentication file is invalid")
+        token = token_file.read_text(encoding="ascii").strip()
+        if not re.fullmatch(r"[a-f0-9]{64}", token):
+            raise RuntimeError("verify authentication file is invalid")
+        headers["Authorization"] = f"Bearer {token}"
+    req = urllib.request.Request(verify_url, data=data, headers=headers)
     with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310 (trusted local URL)
         return json.loads(resp.read().decode("utf-8"))
 

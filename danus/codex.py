@@ -29,6 +29,7 @@ import json
 import os
 import re
 import shutil
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -202,6 +203,28 @@ def subprocess_env(codex_bin: str, *, worker_project: Optional[str] = None) -> D
         if profile is not None:
             env[_PROJECT_WORKER_KEY_ENV] = profile.api_key
     return env
+
+
+def gateway_mcp_arg(role: str, extra_env: Optional[Dict[str, str]] = None) -> str:
+    """Pin a role-gated gateway at command-line precedence, not project trust.
+
+    Standalone App interpreters need their import environment forwarded
+    explicitly: Codex's MCP environment allowlist need not retain PYTHONPATH.
+    No credentials or provider environment are included in this configuration.
+    """
+    if role not in {"worker", "verifier"}:
+        raise ValueError("inline gateway role must be worker or verifier")
+    env = {key: os.environ[key] for key in ("PYTHONHOME", "PYTHONPATH", "PATH") if os.environ.get(key)}
+    if role == "worker" and os.environ.get("DANUS_VERIFY_TOKEN_FILE"):
+        env["DANUS_VERIFY_TOKEN_FILE"] = os.environ["DANUS_VERIFY_TOKEN_FILE"]
+    env.update(extra_env or {})
+    env["DANUS_ROLE"] = role
+    values = ",".join(f"{key}={json.dumps(value)}" for key, value in env.items())
+    return (
+        "mcp_servers.danus={command=" + json.dumps(sys.executable)
+        + ',args=["-m","danus.gateway"],tool_timeout_sec=3600,env={'
+        + values + "}}"
+    )
 
 
 def exec_cmd(codex_bin: str, model: str, effort: str, *tail: str) -> List[str]:
